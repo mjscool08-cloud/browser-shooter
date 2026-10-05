@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Browser Shooter v7</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
+    canvas{display:block}
+    #hud{position:fixed;inset:0;pointer-events:none;font-family:Consolas,monospace;color:white;text-shadow:2px 2px 2px #000}
+    #crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:25px}
+    #help{position:absolute;left:12px;top:12px;padding:9px 12px;border-radius:8px;background:#0008;line-height:1.45}
+    #status{position:absolute;right:12px;top:12px;padding:8px 10px;border-radius:8px;background:#0008;text-align:right}
+    #selected{position:absolute;left:50%;bottom:88px;transform:translateX(-50%);padding:5px 10px;border-radius:6px;background:#0008}
+    #hotbar{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:3px}
+    .slot{width:62px;height:50px;border:2px solid #ffffff88;background:#0008;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.2}
+    .slot.selected{border:3px solid white;transform:translateY(-3px);background:#ffffff2a}
+    #weapon{position:absolute;right:9%;bottom:2%;transform-origin:bottom right}
+    .sword{width:18px;height:175px;background:linear-gradient(90deg,#999,#eee,#888);border:3px solid #333;transform:rotate(-25deg)}
+    .sword:after{content:"";position:absolute;width:82px;height:17px;background:#77502d;left:-35px;bottom:16px;border:3px solid #222}
+    .pistol{width:120px;height:52px;background:#444;border:4px solid #1d1d1d;border-radius:4px;transform:rotate(-7deg)}
+    .pistol:before{content:"";position:absolute;width:38px;height:68px;background:#333;right:12px;top:40px;transform:skew(-8deg);border:4px solid #1d1d1d}
+    .pistol:after{content:"";position:absolute;width:74px;height:15px;background:#666;left:8px;top:8px}
+    .rifle{width:190px;height:34px;background:#4a4a4a;border:4px solid #1b1b1b;transform:rotate(-7deg)}
+    .rifle:after{content:"";position:absolute;width:48px;height:55px;background:#333;right:36px;top:27px;transform:skew(-8deg)}
+    .shotgun{width:205px;height:28px;background:#555;border:4px solid #222;transform:rotate(-6deg)}
+    .shotgun:after{content:"";position:absolute;width:82px;height:24px;background:#8a5a32;right:16px;top:24px}
+    .greatsword{width:28px;height:205px;background:linear-gradient(90deg,#777,#ddd,#777);border:4px solid #222;transform:rotate(-23deg)}
+    .greatsword:after{content:"";position:absolute;width:100px;height:20px;background:#6d4526;left:-38px;bottom:20px;border:3px solid #222}
+    .python{width:32px;height:210px;border-radius:16px;background:repeating-linear-gradient(0deg,#ffd51c 0 18px,#2176ff 18px 36px);border:4px solid #222;transform:rotate(-20deg)}
+    .python:after{content:"";position:absolute;width:32px;height:210px;border-radius:16px;background:repeating-linear-gradient(0deg,#2176ff 0 18px,#ffd51c 18px 36px);border:4px solid #222;left:44px;top:0}
+    .sixtyseven{width:150px;height:55px;background:#673ab7;border:4px solid #111;border-radius:10px;transform:rotate(-6deg)}
+    .sixtyseven:after{content:"67";position:absolute;font:bold 32px Consolas;color:#fff;left:50px;top:8px;text-shadow:none}
+  </style>
+</head>
+<body>
+<div id="hud">
+  <div id="crosshair">+</div>
+  <div style="position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#7b1fa2dd;padding:6px 12px;border:2px solid white;border-radius:6px;font-size:16px">BROWSER SHOOTER v7 — FIXED LAUNCHER</div><div id="help">
+    WASD = move • Space = jump • Ctrl = sprint<br>
+    Right click = break block • Left click = place/use<br>
+    1-5 = blocks • 6-0 = weapons • - = Python • = = 67<br>I = inventory • E/Q = special abilities
+  </div>
+  <div id="status">BROWSER SHOOTER v7<br>HP: <span id="hp">100</span>/100<br>Mobs: <span id="mobCount">0</span><br>Bosses: <span id="bossCount">0</span></div>
+  <div id="selected">Selected: Grass</div>
+  <div id="hotbar">
+    <div class="slot selected">1<br>Grass</div>
+    <div class="slot">2<br>Dirt</div>
+    <div class="slot">3<br>Stone</div>
+    <div class="slot">4<br>Wood</div>
+    <div class="slot">5<br>Bricks</div>
+    <div class="slot">6<br>Sword</div>
+    <div class="slot">7<br>Pistol</div>
+    <div class="slot">8<br>Rifle</div>
+    <div class="slot">9<br>Shotgun</div>
+    <div class="slot">0<br>Greatsword</div>
+  </div>
+  <div id="weapon"></div>
+
+  <div id="inventoryMenu" style="display:none;pointer-events:auto;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#101010ee;border:2px solid white;padding:20px;width:520px;border-radius:10px">
+    <div style="font-size:24px;text-align:center;margin-bottom:10px">INVENTORY</div>
+    <div style="font-size:12px;text-align:center;margin-bottom:12px">↑/↓ select • Enter moves item between hotbar and storage • I or Escape closes</div>
+    <div style="display:flex;gap:20px">
+      <div style="flex:1">
+        <div style="font-weight:bold;margin-bottom:6px">HOTBAR</div>
+        <div id="inventoryHotbarList"></div>
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:bold;margin-bottom:6px">STORAGE</div>
+        <div id="inventoryStorageList"></div>
+      </div>
+    </div>
+    <div id="inventoryStatus" style="margin-top:12px;text-align:center;height:20px"></div>
+  </div>
+  <div id="cheatMenu" style="display:none;pointer-events:auto;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#111e;border:2px solid white;padding:22px;width:420px;border-radius:10px;text-align:center">
+    <div style="font-size:22px;margin-bottom:10px">CHEATCODE MENU</div>
+    <div style="font-size:12px;margin-bottom:12px">Enter a cheat code and press Enter. Escape closes the menu.</div>
+    <input id="cheatInput" autocomplete="off" spellcheck="false" style="width:90%;font:18px Consolas;padding:8px;background:#222;color:white;border:1px solid #aaa">
+    <div id="cheatResult" style="height:24px;margin-top:10px"></div>
+  </div>
+  <div id="deathScreen" style="display:none;position:absolute;inset:0;background:#600a;align-items:center;justify-content:center;font-size:42px;text-align:center">YOU DIED<br><span style="font-size:18px">Respawning...</span></div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
