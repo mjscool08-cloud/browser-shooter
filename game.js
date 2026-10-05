@@ -980,6 +980,8 @@ cheatInput.addEventListener('keydown',e=>{
   }else if(code==='Damage1ncr3a23'){
     damageBonus+=20;
     cheatResult.textContent=`Damage bonus: +${damageBonus}`;
+  } else if(code==='secretdevcode'){
+    print("secret hidden codes: The3P71h0n, 67, Damage1ncr3a23, and secretdevcode.")
   }else{
     cheatResult.textContent='Unknown cheat code.';
   }
